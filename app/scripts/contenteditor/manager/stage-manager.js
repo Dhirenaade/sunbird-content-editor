@@ -245,6 +245,7 @@ org.ekstep.contenteditor.stageManager = new (Class.extend({
 		this.setNavigationalParams()
 		var mediaMap = {}
 		var plugin_arr = []
+		var questionData = []
 		instance.summary = []
 		instance.assets = []
 		instance.pragma = null
@@ -255,6 +256,7 @@ org.ekstep.contenteditor.stageManager = new (Class.extend({
 			var stageAssets = []
 			plugin_arr.push({ identifier: stage.manifest.id, semanticVersion: stage.manifest.ver})
 			_.forEach(stage.children, function (plugin) {
+				questionData = plugin._questions;
 				var id = plugin.getManifestId()
 				plugin_arr.push({ identifier: plugin.manifest.id, semanticVersion: plugin.manifest.ver});
 				if (_.isUndefined(stageBody[id])) stageBody[id] = []
@@ -297,6 +299,21 @@ org.ekstep.contenteditor.stageManager = new (Class.extend({
 		if (!_.isEmpty(org.ekstep.contenteditor.migration.patch)) {
 			content.theme['patch'] = org.ekstep.contenteditor.migration.patch.toString()
 		}
+		var questionValidate = questionData.some(function(item){
+			return ((JSON.parse(item.body).data.data.question.text).includes('data-math' && 'math-text'))
+		});
+		var optionValidate = questionData.some(function(item){
+			return JSON.parse(item.body).data.data.options.some(function(options){
+				return options.text.includes('data-math' && 'math-text');
+			})
+		})
+
+		if(!(questionValidate || optionValidate)){
+			content.theme.manifest.media = _.filter(content.theme.manifest.media, function(obj) {
+			  return !obj.src.includes('katex');
+			  })
+		  };
+
 		return _.cloneDeep(content)
 	},
 	manifestGenerator: function (content) {
